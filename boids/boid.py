@@ -24,6 +24,7 @@ class Boid:
     separation = True                 # Whether the rule of separation is enabled
     separation_factor = 0.01          # How much to avoid other boids
     distance_max_visibility = 100     # How far away a boid can see other boids
+    trail_length = 50
 
     def __init__(self, x, y, color=(255, 255, 255), size=10):
         self.pos = np.array([x, y], dtype=float)
@@ -35,6 +36,7 @@ class Boid:
         self.vel_avg = np.array([0, 0], dtype=float)
         self.cohesion_direction = np.array([0, 0], dtype=float)
         self.separation_direction = np.array([0, 0], dtype=float)
+        self.last_positions = []
 
     @property
     def x(self):
@@ -64,6 +66,9 @@ class Boid:
         return local_entities
 
     def update(self, window):
+        self.last_positions.append(np.array([self.pos[0], self.pos[1]], dtype=float))
+        if len(self.last_positions) > Boid.trail_length:
+            self.last_positions.pop(0)
         self.pos_avg = np.array([0, 0], dtype=float)
         self.vel_avg = np.array([0, 0], dtype=float)
         self.acc = np.array([0, 0], dtype=float)
@@ -144,10 +149,14 @@ class Boid:
         pygame.draw.circle(window.screen, self.color, (self.x, self.y), self.size)
 
         # Draw this boid's velocity vector as a red line
-        pygame.draw.line(window.screen, (255, 0, 0), (self.x, self.y), (self.x + self.vel[0]*20/np.linalg.norm(self.vel), self.y + self.vel[1]*20/np.linalg.norm(self.vel)), 2)
+        # pygame.draw.line(window.screen, (255, 0, 0), (self.x, self.y), (self.x + self.vel[0]*20/np.linalg.norm(self.vel), self.y + self.vel[1]*20/np.linalg.norm(self.vel)), 2)
 
         # Draw the local boids' average velocity vector as a green line
         # pygame.draw.line(window.screen, (0, 255, 0), (self.x, self.y), (self.x + self.vel_avg[0] * 20, self.y + self.vel_avg[1] * 20), 2)
 
         # Draw the local boids' average position as a blue circle
         # pygame.draw.circle(window.screen, (0, 0, 255), (self.pos_avg[0], self.pos_avg[1]), 3)
+
+        # Draw the last positions
+        for pos in self.last_positions:
+            pygame.draw.circle(window.screen, (0, 0, 255), (pos[0], pos[1]), 1)
